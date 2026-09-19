@@ -31,7 +31,10 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci
-      - run: npx tsc --noEmit
+      # next build type-checks the whole project as part of the build,
+      # so a separate `tsc --noEmit` isn't needed here (and would fail
+      # anyway before build, since Next.js only generates its route
+      # types in .next/ once dev or build has run).
       - run: npm run build
 
   backend-check:
