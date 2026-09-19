@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, StyleSheet, Text, Pressable, Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Sharing from 'expo-sharing';
 import type { RootStackParamList } from '../navigation/types';
@@ -91,6 +92,12 @@ export function ProjectViewerScreen({ route, navigation }: Props) {
   useEffect(() => {
     reloadPins();
   }, [reloadPins]);
+
+  useFocusEffect(
+    useCallback(() => {
+      syncNow().then(reloadPins);
+    }, [reloadPins])
+  );
 
   function handlePageChanged(page: number, total: number) {
     setCurrentPage(page);

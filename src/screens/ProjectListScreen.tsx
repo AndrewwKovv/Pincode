@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, TextInput, FlatList, Pressable, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, FlatList, Pressable, StyleSheet, Alert, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as DocumentPicker from 'expo-document-picker';
@@ -37,11 +37,21 @@ export function ProjectListScreen({ navigation }: Props) {
     navigation.replace('Login');
   }
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   useFocusEffect(
     useCallback(() => {
       listProjects().then(setProjects);
+      syncNow().then(() => listProjects().then(setProjects));
     }, [])
   );
+
+  async function handlePullToRefresh() {
+    setIsRefreshing(true);
+    await syncNow();
+    setProjects(await listProjects());
+    setIsRefreshing(false);
+  }
 
   const visibleProjects = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -163,6 +173,9 @@ export function ProjectListScreen({ navigation }: Props) {
         data={visibleProjects}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={handlePullToRefresh} tintColor={colors.primary} />
+        }
         ListEmptyComponent={
           <Text style={styles.emptyText}>
             {projects.length === 0 ? 'Пока нет объектов. Добавьте PDF-план.' : 'Ничего не найдено'}

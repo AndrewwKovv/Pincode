@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { syncNow } from './syncEngine';
 
-const PERIODIC_SYNC_MS = 60000;
+const PERIODIC_SYNC_MS = 20000;
 
 export function useAutoSync(): void {
   useEffect(() => {
