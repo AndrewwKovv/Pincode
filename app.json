@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Pincode",
+    "slug": "pincode",
+    "scheme": "pincode",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
+    "ios": {
+      "bundleIdentifier": "com.pincode.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Камера нужна, чтобы прикладывать фото к замечаниям на плане.",
+        "NSPhotoLibraryUsageDescription": "Доступ к галерее нужен, чтобы прикладывать фото к замечаниям на плане.",
+        "NSPhotoLibraryAddUsageDescription": "Нужно разрешение, чтобы сохранять фото замечаний."
+      }
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-document-picker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Доступ к галерее нужен, чтобы прикладывать фото к замечаниям на плане.",
+          "cameraPermission": "Камера нужна, чтобы прикладывать фото к замечаниям на плане."
+        }
+      ],
+      "expo-asset",
+      "expo-secure-store"
+    ]
+  }
+}

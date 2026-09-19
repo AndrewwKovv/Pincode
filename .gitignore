@@ -1,0 +1,23 @@
+# Mobile (Expo/React Native)
+node_modules/
+ios/
+android/
+.expo/
+*.log
+
+# Backend (Python)
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.pyc
+backend/.env
+backend/storage/
+
+# Web (Next.js)
+web/node_modules/
+web/.next/
+web/.env.local
+
+# OS
+.DS_Store
+.claude/
