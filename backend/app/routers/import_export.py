@@ -1,4 +1,7 @@
+import base64
+import datetime
 import uuid
+from pathlib import Path
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -9,7 +12,7 @@ from app.database import get_db
 from app.models import Project, Pin, Photo, User
 from app.schemas import ProjectOut
 from app.deps import get_current_user
-from app.storage import project_pdf_path, photo_file_path, write_base64
+from app.storage import STORAGE_ROOT, project_pdf_path, photo_file_path, write_base64
 
 router = APIRouter(prefix="/projects", tags=["import"])
 
@@ -92,3 +95,73 @@ def import_project(
 
     db.flush()
     return project
+
+
+@router.get("/{project_id}/export")
+def export_project(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    project = db.query(Project).filter(
+        Project.id == project_id, Project.company_id == current_user.company_id, Project.deleted_at.is_(None)
+    ).first()
+    if project is None or not project.pdf_object_key:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Проект не найден")
+
+    pdf_path = STORAGE_ROOT / project.pdf_object_key
+    if not pdf_path.exists():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PDF отсутствует в хранилище")
+    pdf_base64 = base64.b64encode(pdf_path.read_bytes()).decode()
+
+    pins = (
+        db.query(Pin)
+        .filter(Pin.project_id == project.id, Pin.deleted_at.is_(None))
+        .order_by(Pin.created_at)
+        .all()
+    )
+
+    exported_pins = []
+    for pin in pins:
+        photos = (
+            db.query(Photo)
+            .filter(Photo.pin_id == pin.id, Photo.deleted_at.is_(None))
+            .order_by(Photo.created_at)
+            .all()
+        )
+        exported_photos = []
+        for photo in photos:
+            if not photo.object_key:
+                continue
+            photo_path = STORAGE_ROOT / photo.object_key
+            if not photo_path.exists():
+                continue
+            exported_photos.append(
+                {
+                    "id": str(photo.id),
+                    "filename": Path(photo.object_key).name,
+                    "base64": base64.b64encode(photo_path.read_bytes()).decode(),
+                    "createdAt": photo.created_at.isoformat(),
+                }
+            )
+
+        exported_pins.append(
+            {
+                "id": str(pin.id),
+                "pageNumber": pin.page_number,
+                "x": pin.x,
+                "y": pin.y,
+                "description": pin.description,
+                "author": pin.author_name,
+                "createdAt": pin.created_at.isoformat(),
+                "photos": exported_photos,
+            }
+        )
+
+    return {
+        "formatVersion": 1,
+        "exportedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "project": {"name": project.name, "createdAt": project.created_at.isoformat()},
+        "pdfBase64": pdf_base64,
+        "pins": exported_pins,
+    }

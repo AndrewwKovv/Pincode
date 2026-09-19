@@ -87,6 +87,22 @@ export async function fetchProject(id: string): Promise<Project> {
   return res.json();
 }
 
+export async function downloadProjectExport(projectId: string, projectName: string): Promise<void> {
+  const res = await authedFetch(`/projects/${projectId}/export`);
+  const text = await res.text();
+  const safeName = projectName.trim().replace(/[^A-Za-z0-9_-]+/g, "_").replace(/^_+|_+$/g, "") || "project";
+
+  const blob = new Blob([text], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${safeName}.pincode`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 export async function importProjectFile(payloadText: string): Promise<Project> {
   const res = await authedFetch("/projects/import", {
     method: "POST",
